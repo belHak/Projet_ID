@@ -21,26 +21,30 @@ public class WrapperCSV {
      * @param tableName
      * parse csv file into SQL table
      */
-    public static void parseCSV(String csvPath,String tableName){
+    public static String parseCSV(String csvPath,String tableName){
         BufferedReader reader;
+        StringBuilder query = new StringBuilder();
         try {
+
             reader = new BufferedReader(new FileReader(csvPath));
             String line = reader.readLine();
 
             columns =line.split(";");
-            createTable(tableName);
+            query.append(createTable(tableName));
             while (line != null) {
-                insertValue(tableName,line.split(";"));
+                query.append(insertValue(tableName,line.split(";")));
                 line = reader.readLine();
             }
 
             reader.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return query.toString();
     }
 
-    public static void createTable(String tableName){
+    public static String createTable(String tableName){
         StringBuilder sql = new StringBuilder( ) ;
         sql.append ( "CREATE TABLE IF NOT EXISTS "+tableName +" ( " ) ;
         for(int index = 0 ; index < columns.length ; index++){
@@ -51,20 +55,12 @@ public class WrapperCSV {
             else
                 sql.append(columns[index]+" VARCHAR(100), ");
         }
-        sql.append  ( ") " );
+        sql.append  ( ");\n " );
 
-        try (Connection c = Connect.connect()){
-            Statement stmt = c.createStatement();
-
-            stmt.executeUpdate(sql.toString());
-            stmt.close();
-            System.out.println("Table "+tableName+" has been created");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+       return sql.toString();
     }
 
-    public static void insertValue(String tableName,String[] values){
+    public static String  insertValue(String tableName,String[] values){
         StringBuilder sql = new StringBuilder( ) ;
         sql.append ( "INSERT INTO "+tableName +" ( " ) ;
         for(int index = 0 ; index < columns.length ; index++){
@@ -85,20 +81,21 @@ public class WrapperCSV {
                 sql.append("'"+values[index]+"'"+" , ");
 
         }
-        sql.append  ( ") " );
-        System.out.println(sql.toString());
-        try (Connection c = Connect.connect()){
-            Statement stmt = c.createStatement();
+        sql.append  ( "); \n" );
 
-            stmt.executeUpdate(sql.toString());
-            stmt.close();
-            System.out.println("value "+tableName+" has been inserted");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        return sql.toString();
     }
 
     public static void main(String[] args) {
-        parseCSV("src/main/java/data/velib.csv","velib");
+        try (Connection c = Connect.connect()){
+            Statement stmt = c.createStatement();
+            System.out.println(parseCSV("src/main/java/data/velib.csv","velib"));
+            //stmt.executeUpdate(parseCSV("src/main/java/data/velib.csv","velib"));
+            stmt.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 }
