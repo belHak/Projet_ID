@@ -13,7 +13,7 @@ public class Connect {
         try {
             Class.forName("org.sqlite.JDBC");
 
-            String url = "jdbc:sqlite:src/main/java/data/tp1.db";
+            String url = "jdbc:sqlite:src/main/java/db/database.db";
 
             conn = DriverManager.getConnection(url);
 

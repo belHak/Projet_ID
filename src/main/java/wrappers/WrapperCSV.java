@@ -11,42 +11,44 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class WrapperCSV {
+public class WrapperCSV implements Wrapper{
 
-    private static String[] columns ;
+    private String[] columns ;
+    private String source ;
+
+    public WrapperCSV(String source){
+        this.source = source ;
+    }
 
     /**
      *
-     * @param csvPath
-     * @param tableName
      * parse csv file into SQL table
      */
-    public static String parseCSV(String csvPath,String tableName){
+    public  void parseCSV(){
         BufferedReader reader;
-        StringBuilder query = new StringBuilder();
-        try {
 
-            reader = new BufferedReader(new FileReader(csvPath));
+        try {
+            reader = new BufferedReader(new FileReader("src/main/java/wrappers/sources/"+source+".csv"));
             String line = reader.readLine();
 
-            columns =line.split(";");
-            query.append(createTable(tableName));
-            while (line != null) {
-                query.append(insertValue(tableName,line.split(";")));
-                line = reader.readLine();
+            columns =line.split(",");
+            createTable(source);
+
+            while ((line = reader.readLine()) != null) {
+                insertValue(source,line.split(","));
             }
 
             reader.close();
 
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
-        return query.toString();
+
     }
 
-    public static String createTable(String tableName){
+    public void createTable(String tableName) throws SQLException {
         StringBuilder sql = new StringBuilder( ) ;
-        sql.append ( "CREATE TABLE IF NOT EXISTS "+tableName +" ( " ) ;
+        sql.append ( "DROP Table IF EXISTS "+tableName+" ;\nCREATE TABLE "+tableName +" ( " ) ;
         for(int index = 0 ; index < columns.length ; index++){
             if(index == 0 )
                 sql.append(columns[index] +" INT PRIMARY KEY NOT NULL , ");
@@ -57,10 +59,18 @@ public class WrapperCSV {
         }
         sql.append  ( ");\n " );
 
-       return sql.toString();
+        try (Connection c = Connect.connect()) {
+            Statement stmt = c.createStatement();
+
+            System.out.println(sql);
+            stmt.executeUpdate(sql.toString());
+            stmt.close();
+        } catch (SQLException throwables) {
+            System.out.println(throwables.getMessage());
+        }
     }
 
-    public static String  insertValue(String tableName,String[] values){
+    public  void  insertValue(String tableName,String[] values){
         StringBuilder sql = new StringBuilder( ) ;
         sql.append ( "INSERT INTO "+tableName +" ( " ) ;
         for(int index = 0 ; index < columns.length ; index++){
@@ -71,31 +81,43 @@ public class WrapperCSV {
 
         }
         sql.append  ( ") VALUES ( " );
-        for(int index = 0 ; index < values.length ; index++) {
 
-            if(index == 0 )
-                sql.append(values[index]+" , ");
-            else if(index == values.length-1)
-                sql.append("'"+values[index]+"'");
-            else
-                sql.append("'"+values[index]+"'"+" , ");
+
+        sql.append(values[0]);
+
+        for(int index = 1 ; index < values.length ; index++) {
+            sql.append(",");
+            String value = values[index].equals("") ?  "NULL" : "'"+values[index]+"'";
+            sql.append(value);
 
         }
         sql.append  ( "); \n" );
-
-        return sql.toString();
-    }
-
-    public static void main(String[] args) {
-        try (Connection c = Connect.connect()){
+        try (Connection c = Connect.connect()) {
             Statement stmt = c.createStatement();
-            System.out.println(parseCSV("src/main/java/data/velib.csv","velib"));
-            //stmt.executeUpdate(parseCSV("src/main/java/data/velib.csv","velib"));
+            System.out.println(sql);
+            stmt.executeUpdate(sql.toString());
             stmt.close();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException throwables) {
+            System.out.println(throwables.getMessage());
         }
 
+    }
+
+    @Override
+    public void parse() {
+        parseCSV();
+    }
+
+    @Override
+    public void drop() {
+        String sql = "DROP TABLE "+source+" ;" ;
+        try (Connection c = Connect.connect()) {
+            Statement stmt = c.createStatement();
+            System.out.println(sql);
+            stmt.executeUpdate(sql);
+            stmt.close();
+        } catch (SQLException throwables) {
+            System.out.println(throwables.getMessage());
+        }
     }
 }
