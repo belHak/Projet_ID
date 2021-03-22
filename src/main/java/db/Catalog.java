@@ -9,18 +9,19 @@ public class Catalog {
 
     private static final Map<String, String[]> views  = new HashMap<String, String[]>(
             Map.of(
-                    "articles", new String[]{"film", "critics"},
-                    "tables", new String[]{"film", "critics", "cars", "usa", "velib"}
+                    "articles_films", new String[]{ "criticsFilms","film"},
+                    "articles_voitures", new String[]{"cars", "criticsCars"},
+                    "citoyens",new String[]{"usa"}
             )
     );
 
     private static final Map<String, String> sourceType  = new HashMap<String, String>(
             Map.of(
                     "film", "CSV",
-                    "critics","BD",
-                    "cars","CSV",
+                    "criticsFilms","BD",
+                    "cars","BD",
                     "usa","CSV",
-                    "velib","CSV"
+                    "criticsCars","CSV"
 
             )
     );
@@ -32,7 +33,5 @@ public class Catalog {
     public static String getType(String source){
         return sourceType.get(source);
     }
-
-
 
 }

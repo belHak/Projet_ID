@@ -1,7 +1,7 @@
 package db;
 
 import Connect.Connect;
-import wrappers.IWrapper;
+import wrappers.Wrapper;
 import wrappers.WrapperBD;
 import wrappers.WrapperCSV;
 
@@ -11,14 +11,29 @@ import java.util.List;
 
 public class Mediator {
 
-        private static List<IWrapper> IWrappers = new ArrayList<>();
+        private static final List<Wrapper> Wrappers = new ArrayList<>();
 
-        public static void request(String select, String from, String where) throws SQLException {
+    /**
+     *
+     * @param sql
+     */
+    public static void request(String sql)  {
 
+
+            String select = sql.substring(sql.indexOf("SELECT")+6, sql.indexOf("FROM"));
+            String from = "";
+            String where = "";
+            if(sql.contains("WHERE")){
+                from = sql.substring(sql.indexOf("FROM")+4, sql.indexOf("WHERE"));
+                where = sql.substring(sql.indexOf("WHERE")+5);
+            }
+            else{
+                from = sql.substring(sql.indexOf("FROM")+4);
+            }
             String[] views  =from.split(",");
             initWrappers(views);
-            IWrappers.forEach(IWrapper::parse);
-            String sql = "SELECT "+select+" FROM "+from;
+            Wrappers.forEach(Wrapper::parse);
+            sql = "SELECT "+select+" FROM "+from;
             if(!where.equals(""))
                 sql+=where ;
 
@@ -28,9 +43,14 @@ public class Mediator {
                 ResultSet resultSet = stmt.executeQuery(sql);
                 ResultSetMetaData rsmd = resultSet.getMetaData();
                 int columnsNumber = rsmd.getColumnCount();
+                for (int i = 1; i <= columnsNumber; i++) {
+                    if (i > 1) System.out.print(" | ");
+                    System.out.print( rsmd.getColumnName(i));
+                }
+                System.out.println("");
                 while (resultSet.next()) {
                     for (int i = 1; i <= columnsNumber; i++) {
-                        if (i > 1) System.out.print(",  ");
+                        if (i > 1) System.out.print(" , ");
                         String columnValue = resultSet.getString(i);
                         System.out.print(columnValue + " " /*+ rsmd.getColumnName(i)*/);
                     }
@@ -40,10 +60,14 @@ public class Mediator {
             } catch (SQLException throwables) {
                 System.out.println(throwables.getMessage());
             }
-            IWrappers.forEach(IWrapper::drop);
+            Wrappers.forEach(Wrapper::dropTable);
         }
 
-        public static void initWrappers(String... views){
+    /**
+     *
+     * @param views
+     */
+    public static void initWrappers(String... views){
             for(String view : views){
                 ;
                 view = view.replaceAll("\\s+","");
@@ -51,15 +75,18 @@ public class Mediator {
                 for(String source : sources){
                     String type  = Catalog.getType(source);
                     switch (type){
-                        case "CSV" : IWrappers.add(new WrapperCSV(source));break;
-                        case "BD" : IWrappers.add(new WrapperBD(source));break;
+                        case "CSV" : Wrappers.add(new WrapperCSV(source));break;
+                        case "BD" : Wrappers.add(new WrapperBD(source));break;
                     }
                 }
             }
         }
 
     public static void main(String[] args) throws SQLException {
-        request("*","tables"," ");
-//        request("*","articles","");
+
+        request("SELECT * FROM citoyens");
+        //request("SELECT * FROM articles_voitures");
+        //request("SELECT * FROM articles_films");
+
     }
 }

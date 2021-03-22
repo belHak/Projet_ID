@@ -1,15 +1,20 @@
 package wrappers;
 
-import Connect.Connect;
+
 
 import java.sql.*;
 
-public class WrapperBD extends Wrapper implements IWrapper {
+public class WrapperBD extends AbstractWrapper implements Wrapper {
 
     public WrapperBD(String source) {
         super(source);
     }
 
+
+    /**
+     *
+     * parse BD into SQL table
+     */
     @Override
     public void parse() {
         String sql = "SELECT * FROM " + source;

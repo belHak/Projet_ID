@@ -1,14 +1,10 @@
 package wrappers;
 
-import Connect.Connect;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import java.sql.SQLException;
-
-
-public class WrapperCSV extends Wrapper implements IWrapper {
+public class WrapperCSV extends AbstractWrapper implements Wrapper {
 
 
 
