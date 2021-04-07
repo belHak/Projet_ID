@@ -85,7 +85,7 @@ public class Mediator {
     public static void main(String[] args) throws SQLException {
 
         request("SELECT * FROM citoyens");
-        //request("SELECT * FROM articles_voitures");
+        request("SELECT * FROM articles_voitures");
         //request("SELECT * FROM articles_films");
 
     }
